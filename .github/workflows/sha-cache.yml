@@ -1,0 +1,99 @@
+name: sha-cache-main
+on: push
+# useful to temporarily disable
+# on: workflow_dispatch
+
+jobs:
+  # Use actions/cache@v3 to check if a previous run for this SHA was successful.
+  fetch-prev-result:
+    runs-on: ubuntu-latest
+    outputs:
+      prev_result: ${{ steps.cat_prev_result.outputs.PREV_RESULT  }}
+    steps:
+      - id: timestamp
+        run: echo "unix=$(date +%s)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v3
+        with:
+          path: /tmp/prev-result
+          key: test-${{ github.sha }}-${{ steps.timestamp.outputs.unix }} # must be unique here and below
+          restore-keys: test-${{ github.sha }} # The cache with the most recent creation date will be used.
+
+      - run: test -e /tmp/prev-result || echo 'unknown' > /tmp/prev-result
+
+      - id: cat_prev_result
+        run: echo "PREV_RESULT=$(cat /tmp/prev-result)" >> $GITHUB_OUTPUT
+
+  # Get the commit SHA of origin/main to ensure we never deploy tags that are not on main
+  fetch-main-sha:
+    runs-on: ubuntu-latest
+    outputs:
+      main_sha: ${{ steps.rev-parse-origin-main.outputs.MAIN_SHA }}
+    steps:
+      - uses: actions/checkout@v3
+      - id: rev-parse-origin-main
+        run: |
+          git fetch origin
+          echo "MAIN_SHA=$(git rev-parse origin/main)" >> $GITHUB_OUTPUT
+
+  # An example skippable, test component
+  code-quality:
+    needs: fetch-prev-result
+    if: needs.fetch-prev-result.outputs.prev_result != 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo 'pass'
+
+  # An example skippable, test component
+  test-one:
+    needs: fetch-prev-result
+    if: needs.fetch-prev-result.outputs.prev_result != 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo 'pass'
+
+  # An example skippable, test component
+  test-two:
+    needs: fetch-prev-result
+    if: needs.fetch-prev-result.outputs.prev_result != 'success'
+    runs-on: ubuntu-latest
+    steps:
+      # - run: echo 'fail'; exit 2
+      - run: echo 'pass'
+
+  # Aggregate, required status check. Will be skipped if any of the sub-tests fail or are skipped.
+  # If not skipped, store success result in the same cache we use above.
+  test:
+    needs: [code-quality, test-one, test-two]
+    runs-on: ubuntu-latest
+    steps:
+      - id: timestamp
+        run: echo "unix=$(date +%s)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v3
+        with:
+          path: /tmp/prev-result
+          key: test-${{ github.sha }}-${{ steps.timestamp.outputs.unix }} # must be unique here and above
+          restore-keys: test-${{ github.sha }} # The cache with the most recent creation date will be used.
+
+      # This updated file will be stored in a fresh cache result
+      - run: echo 'success' > /tmp/prev-result
+
+  deploy:
+    needs: [fetch-main-sha, fetch-prev-result, test]
+    if: always() && needs.fetch-main-sha.outputs.main_sha == github.sha && (github.ref == 'refs/heads/main' || github.ref == 'refs/tags/prod' || github.ref == 'refs/tags/demo')
+    runs-on: ubuntu-latest
+    steps:
+      # FYI: tags only have access to caches created in default branch.
+      # So, we will never skip tests if, for some reason, someone tags `demo` on a feature branch.
+      - if: needs.test.result != 'success' && needs.fetch-prev-result.outputs.prev_result != 'success'
+        run: |
+          echo "Refusing to deploy commit! test=${{ needs.test.result }}, fetch-prev-result=${{ needs.fetch-prev-result.outputs.prev_result }}"
+          exit 255
+
+      - run: echo "deploy staging"
+        if: github.ref == 'refs/heads/main'
+      - run: echo "deploy prod"
+        if: github.ref == 'refs/tags/prod'
+      - run: echo "deploy demo"
+        if: github.ref == 'refs/tags/demo'

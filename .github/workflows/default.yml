@@ -1,0 +1,32 @@
+name: default-ci
+# disabling on push
+on: workflow_dispatch
+
+jobs:
+  code-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo 'looks good'
+
+  test-one:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo 'passing'
+
+  test-two:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo 'passing also'
+
+  test:
+    needs: [code-quality, test-one, test-two]
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo 'all good'
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/tags/prod'
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo 'deploying'
