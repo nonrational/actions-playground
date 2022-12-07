@@ -1,11 +1,11 @@
 name: optimistic-main
 # run full test suite whenever any branch is pushed
 # this means we don't run tests when only pushing a tag
-on:
-  push:
-    branches: '*'
+# on:
+#   push:
+#     branches: '*'
 # disabling on push
-# on: workflow_dispatch
+on: workflow_dispatch
 
 jobs:
   code-quality:

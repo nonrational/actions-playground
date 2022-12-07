@@ -1,7 +1,7 @@
 name: tree-cache-main
-on: push
+# on: push
 # useful to temporarily disable
-# on: workflow_dispatch
+on: workflow_dispatch
 
 jobs:
   # Use skip-duplicate-actions@v5 to determine if there's a previous equivalent successful build.

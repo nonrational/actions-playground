@@ -1,7 +1,7 @@
 name: sha-cache-main
-on: push
+# on: push
 # useful to temporarily disable
-# on: workflow_dispatch
+on: workflow_dispatch
 
 jobs:
   # Use actions/cache@v3 to check if a previous run for this SHA was successful.
