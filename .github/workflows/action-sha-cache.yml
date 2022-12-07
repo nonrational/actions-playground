@@ -6,9 +6,10 @@ on: push
 jobs:
   fetch-prev-result:
     runs-on: ubuntu-latest
-    uses: nonrational/sha-storage-action@master
-    with:
-      result: success
+    steps:
+      - uses: nonrational/sha-storage-action@master
+        with:
+          result: success
 
   # An example skippable, test component
   code-quality:
