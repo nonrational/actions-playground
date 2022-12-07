@@ -18,7 +18,7 @@ jobs:
     if: needs.fetch-prev-result.outputs.result != 'success'
     runs-on: ubuntu-latest
     steps:
-      - run: echo 'pass'
+      - run: echo ${{ needs.fetch-prev-result.outputs.result }}
 
   # An example skippable, test component
   test-one:
@@ -26,7 +26,7 @@ jobs:
     if: needs.fetch-prev-result.outputs.result != 'success'
     runs-on: ubuntu-latest
     steps:
-      - run: echo 'pass'
+      - run: echo ${{ needs.fetch-prev-result.outputs.result }}
 
   # An example skippable, test component
   test-two:
@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # - run: echo 'fail'; exit 2
-      - run: echo 'pass'
+      - run: echo ${{ needs.fetch-prev-result.outputs.result }}
 
   # Aggregate, required status check. Will be skipped if any of the sub-tests fail or are skipped.
   # If not skipped, store success result in the same cache we use above.

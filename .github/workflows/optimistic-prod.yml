@@ -2,12 +2,12 @@
 # You could tag prod before tests have even run and potentially do bad things.
 # Requires that you trust what's on main, which requires trusting PR merges.
 name: optimistic-prod
-on:
-  push:
-    tags: ['prod', 'demo']
+# on:
+#   push:
+#     tags: ['prod', 'demo']
 
 # disabling on push
-# on: workflow_dispatch
+on: workflow_dispatch
 
 jobs:
   check-tag-is-main:
