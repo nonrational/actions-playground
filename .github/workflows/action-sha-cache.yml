@@ -6,17 +6,11 @@ on: push
 jobs:
   fetch-prev-result:
     runs-on: ubuntu-latest
+    outputs:
+      result: ${{ steps.restore-cache.outputs.result }}
+      deploy_sha: ${{ steps.restore-cache.outputs.deploy_sha }}
     steps:
       - uses: nonrational/sha-storage-action@master
-        with:
-          result: success
-
-  check:
-    needs: fetch-prev-result
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo ${{ needs.fetch-prev-result.outputs.result }}
-      - run: echo ${{ needs.fetch-prev-result.outputs.default-branch-sha }}
 
   # An example skippable, test component
   code-quality:
@@ -49,21 +43,13 @@ jobs:
     needs: [code-quality, test-one, test-two]
     runs-on: ubuntu-latest
     steps:
-      - id: timestamp
-        run: echo "unix=$(date +%s)" >> $GITHUB_OUTPUT
-
-      - uses: actions/cache@v3
+      - uses: nonrational/sha-storage-action@master
         with:
-          path: /tmp/prev-result
-          key: test-${{ github.sha }}-${{ steps.timestamp.outputs.unix }} # must be unique here and above
-          restore-keys: test-${{ github.sha }} # The cache with the most recent creation date will be used.
-
-      # This updated file will be stored in a fresh cache result
-      - run: echo 'success' > /tmp/prev-result
+          result: success
 
   deploy:
     needs: [fetch-prev-result, test]
-    if: always() && needs.fetch-prev-result.outputs.default-branch-sha == github.sha && (github.ref == 'refs/heads/main' || github.ref == 'refs/tags/prod' || github.ref == 'refs/tags/demo')
+    if: always() && needs.fetch-prev-result.outputs.deploy_sha == github.sha && (github.ref == 'refs/heads/main' || github.ref == 'refs/tags/prod' || github.ref == 'refs/tags/demo')
     runs-on: ubuntu-latest
     steps:
       # FYI: tags only have access to caches created in default branch.
