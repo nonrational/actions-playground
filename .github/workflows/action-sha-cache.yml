@@ -12,10 +12,11 @@ jobs:
           result: success
 
   check:
+    needs: fetch-prev-result
     runs-on: ubuntu-latest
     steps:
-      - run: echo {{ needs.fetch-prev-result.outputs.result }}
-      - run: echo {{ needs.fetch-prev-result.outputs.default-branch-sha }}
+      - run: echo ${{ needs.fetch-prev-result.outputs.result }}
+      - run: echo ${{ needs.fetch-prev-result.outputs.default-branch-sha }}
 
   # An example skippable, test component
   code-quality:
