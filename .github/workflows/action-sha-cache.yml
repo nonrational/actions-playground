@@ -11,7 +11,7 @@ jobs:
       deploy_sha: ${{ steps.restore-cache.outputs.deploy_sha }}
     steps:
       - id: restore-cache
-        uses: nonrational/sha-storage-action@master
+        uses: parallel-markets/cache-result-action@master
 
   # An example skippable, test component
   code-quality:
@@ -44,7 +44,7 @@ jobs:
     needs: [code-quality, test-one, test-two]
     runs-on: ubuntu-latest
     steps:
-      - uses: nonrational/sha-storage-action@master
+      - uses: parallel-markets/cache-result-action@master
         with:
           result: success
 
@@ -66,3 +66,10 @@ jobs:
         if: github.ref == 'refs/tags/prod'
       - run: echo "deploy demo"
         if: github.ref == 'refs/tags/demo'
+
+  post-deploy:
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/tags/prod'
+    steps:
+      - run: echo "doing post deploy"
