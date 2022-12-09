@@ -70,6 +70,6 @@ jobs:
   post-deploy:
     needs: deploy
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/tags/prod'
+    if: always() && github.ref == 'refs/tags/prod'
     steps:
       - run: echo "doing post deploy"
