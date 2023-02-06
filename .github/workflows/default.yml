@@ -16,14 +16,6 @@ jobs:
       - id: check-left-right
         run: echo "valid=$(git rev-list --left-right --count $GITHUB_SHA...origin/main | grep -c '^0\s*[0-9]')" | tee $GITHUB_OUTPUT
 
-  check-deploy:
-    needs: [validate-ref]
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "CAN_DEPLOY=$CAN_DEPLOY"
-        env:
-          CAN_DEPLOY: ${{ needs.validate-ref.outputs.deployable }}
-
   test:
     runs-on: ubuntu-latest
     steps:
@@ -31,7 +23,9 @@ jobs:
 
   deploy:
     needs: [test, validate-ref]
-    if: needs.validate-ref.outputs.deployable == '1' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags')
+    if: needs.validate-ref.outputs.deployable == '1' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags'))
     runs-on: ubuntu-latest
     steps:
-      - run: echo 'deploying'
+      - run: echo "Deploying $DEPLOY_REF"
+        env:
+          DEPLOY_REF: ${{ github.ref }}
