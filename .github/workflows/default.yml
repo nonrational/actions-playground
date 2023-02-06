@@ -10,11 +10,9 @@ jobs:
       deployable: ${{ steps.check-left-right.outputs.valid }}
     steps:
       - uses: actions/checkout@v3
-        with:
-          fetch-depth: 5 # the number of commits back
       - run: git fetch origin
       - id: check-left-right
-        run: echo "valid=$(git rev-list --left-right --count $GITHUB_SHA...origin/main | grep -c '^0\s*[0-9]')" | tee $GITHUB_OUTPUT
+        run: echo "valid=$(git rev-list --left-right --count $GITHUB_SHA...origin/main | grep -c '^0\s*[0-9]$')" | tee $GITHUB_OUTPUT
 
   test:
     runs-on: ubuntu-latest
