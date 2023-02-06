@@ -1,32 +1,37 @@
 name: default-ci
 # disabling on push
-on: workflow_dispatch
+# on: workflow_dispatch
+on: push
 
 jobs:
-  code-quality:
+  validate-ref:
     runs-on: ubuntu-latest
+    outputs:
+      deployable: ${{ steps.check-left-right.outputs.valid }}
     steps:
-      - run: echo 'looks good'
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 5 # the number of commits back
+      - run: git fetch origin
+      - id: check-left-right
+        run: echo "valid=$(git rev-list --left-right --count $GITHUB_SHA...origin/main | grep -c '^0\s*[0-9]')" | tee $GITHUB_OUTPUT
 
-  test-one:
+  check-deploy:
+    needs: [validate-ref]
     runs-on: ubuntu-latest
     steps:
-      - run: echo 'passing'
-
-  test-two:
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo 'passing also'
+      - run: echo "CAN_DEPLOY=$CAN_DEPLOY"
+        env:
+          CAN_DEPLOY: ${{ needs.validate-ref.outputs.deployable }}
 
   test:
-    needs: [code-quality, test-one, test-two]
     runs-on: ubuntu-latest
     steps:
       - run: echo 'all good'
 
   deploy:
-    needs: test
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/tags/prod'
+    needs: [test, validate-ref]
+    if: needs.validate-ref.outputs.deployable == '1' && (github.ref == 'refs/heads/main' || github.ref == 'refs/tags/prod')
     runs-on: ubuntu-latest
     steps:
       - run: echo 'deploying'
